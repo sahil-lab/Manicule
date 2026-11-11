@@ -1,0 +1,36 @@
+name: Manicule skeleton
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manicule-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the complete local skeleton
+        shell: pwsh
+        run: ./scripts/Verify.ps1
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manicule-verification
+          path: |
+            artifacts/
+            services/api/target/surefire-reports/
+            services/api/target/failsafe-reports/
+          if-no-files-found: warn
+      - name: Stop only this project's services
+        if: always()
+        run: docker compose -p manicule -f infra/docker/compose.yaml stop

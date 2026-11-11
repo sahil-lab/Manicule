@@ -1,0 +1,10 @@
+.git
+.local
+artifacts
+**/node_modules
+**/dist/*
+**/target/*
+!apps/web/dist/**
+!services/api/target/manicule-api.jar
+**/*.tsbuildinfo
+**/*.pdf

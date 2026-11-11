@@ -1,0 +1,14 @@
+.local/
+artifacts/
+node_modules/
+dist/
+target/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

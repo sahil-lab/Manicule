@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: Manicule local skeleton API
+  version: 0.1.0
+  description: >-
+    Independent prototype, not affiliated with Manicule. Phase 1 only. Synthetic metadata
+    validation does not persist data. No agents, benchmark execution, specification
+    ingestion, or domain CRUD is implemented.
+servers:
+  - url: http://localhost:18207
+paths:
+  /api/status:
+    get:
+      operationId: getSkeletonStatus
+      summary: Read the migrated technical marker from PostgreSQL
+      responses:
+        "200":
+          description: Database-backed skeleton status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [service, phase, schemaVersion]
+                properties:
+                  service:
+                    type: string
+                    enum: [manicule]
+                  phase:
+                    type: integer
+                    enum: [1]
+                  schemaVersion:
+                    type: integer
+                    minimum: 1
+        "503":
+          $ref: "#/components/responses/Problem"
+  /api/preflight:
+    post:
+      operationId: validateSyntheticMetadata
+      summary: Validate synthetic metadata without writing any record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Metadata"
+      responses:
+        "200":
+          description: Valid metadata; explicitly not persisted
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [valid, persisted, name, version]
+                properties:
+                  valid:
+                    type: boolean
+                    enum: [true]
+                  persisted:
+                    type: boolean
+                    enum: [false]
+                  name:
+                    type: string
+                    description: Name with surrounding whitespace removed
+                  version:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "415":
+          $ref: "#/components/responses/Problem"
+  /actuator/health/liveness:
+    get:
+      operationId: getLiveness
+      summary: Check process liveness without exposing component details
+      responses:
+        "200":
+          $ref: "#/components/responses/Health"
+        "503":
+          $ref: "#/components/responses/Health"
+  /actuator/health/readiness:
+    get:
+      operationId: getReadiness
+      summary: Check application readiness including the real database
+      responses:
+        "200":
+          $ref: "#/components/responses/Health"
+        "503":
+          $ref: "#/components/responses/Health"
+components:
+  schemas:
+    Metadata:
+      type: object
+      additionalProperties: false
+      required: [name, version]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '\S'
+          example: Synthetic pet store
+        version:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: '^[A-Za-z0-9][A-Za-z0-9._+\-]{0,39}$'
+          example: 1.0.0
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        requestId:
+          type: string
+          format: uuid
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+  responses:
+    Problem:
+      description: Explicit failure; no rejected values or secrets are echoed
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Health:
+      description: Aggregate status only
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [UP, DOWN, OUT_OF_SERVICE, UNKNOWN]

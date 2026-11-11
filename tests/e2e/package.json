@@ -1,0 +1,14 @@
+{
+  "name": "@manicule/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsc --noEmit && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3"
+  }
+}

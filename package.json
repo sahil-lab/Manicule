@@ -1,0 +1,24 @@
+{
+  "name": "manicule",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/web",
+    "tests/e2e"
+  ],
+  "engines": {
+    "node": ">=22.12.0 <25"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint --workspace @manicule/web",
+    "build": "npm run build --workspace @manicule/web",
+    "test": "npm run test --workspace @manicule/web",
+    "test:e2e": "npm run test --workspace @manicule/e2e"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

@@ -1,0 +1,195 @@
+name: manicule
+
+x-hardened: &hardened
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 128
+  restart: "no"
+
+services:
+  db: &database
+    <<: *hardened
+    image: postgres:17-alpine
+    user: "70:70"
+    read_only: true
+    mem_limit: 256m
+    cpus: 0.5
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_admin_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=24"]
+    secrets:
+      - db_admin_password
+      - db_app_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/10-manicule.sql:ro
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/run/postgresql:size=4m,uid=70,gid=70,mode=0770
+    networks:
+      - runtime
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'PGPASSWORD="$$(cat /run/secrets/db_app_password)" psql -h 127.0.0.1 -U manicule
+          -d manicule -tAc ''SELECT 1'' | grep -qx 1',
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  db-bootstrap-check:
+    <<: *database
+    profiles: ["tools"]
+    mem_limit: 384m
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/10-manicule.sql:ro
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/run/postgresql:size=4m,uid=70,gid=70,mode=0770
+      - /var/lib/postgresql/data:size=192m,uid=70,gid=70,mode=0700
+
+  api:
+    <<: *hardened
+    image: manicule-api:local
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    read_only: true
+    mem_limit: 512m
+    cpus: 0.75
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=65 -XX:ActiveProcessorCount=2
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/manicule
+    secrets:
+      - source: db_app_password
+        target: spring.datasource.password
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    networks:
+      - runtime
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "http://127.0.0.1:8080/actuator/health/readiness",
+        ]
+      interval: 5s
+      timeout: 4s
+      retries: 24
+      start_period: 30s
+
+  web:
+    <<: *hardened
+    image: manicule-web:local
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    read_only: true
+    mem_limit: 96m
+    cpus: 0.25
+    ports:
+      - "127.0.0.1:18107:8080"
+      - "127.0.0.1:18207:8081"
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    networks:
+      - runtime
+      - edge
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  web-check:
+    <<: *hardened
+    profiles: ["tools"]
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    mem_limit: 1024m
+    cpus: 1
+    pids_limit: 256
+    environment:
+      NODE_OPTIONS: --max-old-space-size=512
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+    volumes:
+      - ../..:/workspace
+      - node_modules:/workspace/node_modules
+    networks:
+      - tools
+
+  api-check:
+    <<: *hardened
+    profiles: ["tools"]
+    image: maven:3.9.11-eclipse-temurin-21
+    working_dir: /workspace/services/api
+    mem_limit: 1024m
+    cpus: 1
+    pids_limit: 256
+    environment:
+      MAVEN_OPTS: -Xmx512m -XX:ActiveProcessorCount=2
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/manicule
+    secrets:
+      - source: db_app_password
+        target: spring.datasource.password
+    volumes:
+      - ../..:/workspace
+      - maven_cache:/root/.m2
+    networks:
+      - runtime
+      - tools
+
+  e2e:
+    <<: *hardened
+    profiles: ["tools"]
+    image: mcr.microsoft.com/playwright:v1.65.0-noble
+    working_dir: /workspace
+    mem_limit: 1024m
+    cpus: 1
+    pids_limit: 256
+    shm_size: 256m
+    environment:
+      WEB_BASE_URL: http://web:8080
+      API_BASE_URL: http://web:8081
+      INTERNAL_API_BASE_URL: http://api:8080
+      CI: "true"
+      NODE_OPTIONS: --max-old-space-size=512
+    volumes:
+      - ../..:/workspace
+      - node_modules:/workspace/node_modules
+    networks:
+      - runtime
+    command: ["npm", "run", "test:e2e"]
+
+networks:
+  runtime:
+    internal: true
+  edge: {}
+  tools: {}
+
+volumes:
+  postgres_data:
+  node_modules:
+  maven_cache:
+
+secrets:
+  db_admin_password:
+    file: ../../.local/db-admin-password
+  db_app_password:
+    file: ../../.local/db-app-password

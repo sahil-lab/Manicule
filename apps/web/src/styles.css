@@ -1,0 +1,318 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #192b37;
+  background: #f5f7f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.workspace {
+  max-width: 1120px;
+  margin: auto;
+  padding: 0 32px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88px;
+  border-bottom: 1px solid #dfe6e9;
+}
+
+.brand {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.brand-mark {
+  background: #173d36;
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 22px;
+}
+
+.local-badge,
+.eyebrow,
+.planned {
+  color: #3c6258;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.local-badge {
+  border: 1px solid #c9d8d1;
+  background: #edf4ef;
+  border-radius: 20px;
+  padding: 8px 12px;
+}
+
+.intro {
+  padding: 52px 0 32px;
+  max-width: 760px;
+}
+
+h1 {
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.13;
+  margin: 16px 0;
+  font-weight: 650;
+  letter-spacing: -1.5px;
+}
+
+.lede {
+  font-size: 17px;
+  color: #546571;
+  line-height: 1.7;
+  max-width: 660px;
+}
+
+.scope-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: #536475;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #dfe6e9;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 3px 6px #19313b05;
+}
+
+.panel-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.step {
+  color: #577168;
+  background: #edf4ef;
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 19px;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.muted,
+.hint {
+  color: #536475;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.stack-status {
+  min-height: 174px;
+}
+
+.ready {
+  color: #196148;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 26px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #348263;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  gap: 12px;
+  border-bottom: 1px solid #eef1f3;
+  font-size: 13px;
+}
+
+dt {
+  color: #536475;
+}
+
+dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+form {
+  display: grid;
+  margin-top: 22px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #c8d3d9;
+  border-radius: 7px;
+  padding: 11px 12px;
+  margin-bottom: 18px;
+  background: #fcfdfd;
+  color: #192b37;
+}
+
+input[aria-invalid="true"] {
+  border-color: #ac3e32;
+}
+
+:focus-visible {
+  outline: 3px solid #548fbe;
+  outline-offset: 3px;
+}
+
+.hint {
+  margin: -10px 0 16px;
+  font-size: 12px;
+}
+
+button {
+  cursor: pointer;
+  background: #173d36;
+  color: white;
+  border: 1px solid #173d36;
+  padding: 11px 18px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+button:hover:not(:disabled) {
+  background: #26574c;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+button.secondary {
+  background: white;
+  color: #224b41;
+  border-color: #cbd9d3;
+  margin-top: 14px;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #f0f5f2;
+}
+
+.error-message,
+.success-message {
+  font-size: 13px;
+  padding: 12px;
+  border-radius: 7px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.error-message {
+  background: #fff0ed;
+  color: #8d2c22;
+}
+
+.success-message {
+  background: #eef8f1;
+  color: #1c5f3d;
+}
+
+.field-error {
+  color: #8d2c22;
+  font-size: 12px;
+  margin: -10px 0 14px;
+}
+
+.future {
+  padding: 30px 0;
+  color: #536475;
+}
+
+.future h2 {
+  font-size: 15px;
+  color: #263c4b;
+}
+
+.future p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.planned {
+  font-size: 10px;
+}
+
+footer {
+  border-top: 1px solid #dfe6e9;
+  padding: 24px 0;
+  font-size: 12px;
+  color: #536475;
+}
+
+@media (max-width: 720px) {
+  .workspace {
+    padding: 0 18px;
+  }
+
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  .intro {
+    padding-top: 32px;
+  }
+
+  .panel {
+    padding: 22px;
+  }
+
+  .local-badge {
+    font-size: 9px;
+    letter-spacing: 0.8px;
+  }
+}
