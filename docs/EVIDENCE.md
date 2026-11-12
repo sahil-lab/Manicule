@@ -1,5 +1,9 @@
 # Verification evidence
 
+Latest result: **23 tests and 31 integrated checks passed** for the
+[sculptural UI redesign](#sculptural-ui-redesign--verified). Earlier runs below are
+retained as historical evidence.
+
 ## Initial observations
 
 - Source guide: `07_Manicule_Docs_Benchmark.pdf`, 3 pages, all extracted text read
@@ -209,3 +213,126 @@ Next: **Phase 2 only after a new instruction**, beginning with identity/permissi
 API-version ownership, idempotency, and state-transition decisions. Domain tables and
 business routes remain unimplemented. Later benchmark criteria are pending, not
 zero-valued or fabricated scores.
+
+## UI art-direction update
+
+The Phase 1 frontend was re-art-directed as an editorial, cinematic landing page without
+changing the backend contract or introducing Phase 2 behavior. The page now pairs a dark
+forest-green hero and CSS-drawn orbital workflow concept with an editorial manifesto, the
+live service/database health panel, the working non-persistent metadata check, and clearly
+labelled future-phase concepts. Typography and visual effects use local CSS and system
+fonts; no external assets or services are requested. Invented geographic coordinates were
+removed.
+
+**Verification:** `.\scripts\Verify.ps1` exited 0 on 2026-11-11. The latest run began at
+`2026-11-11T20:26:30Z` and completed at `2026-11-11T20:30:33Z`. The frontend passed
+Prettier, ESLint, TypeScript, its **5 unit tests**, and its production build. The API
+passed **8 unit tests and 4 PostgreSQL integration tests**; Chromium/API E2E passed **3
+tests**. The integrated gate recorded **31 checks** and generated the updated full-page
+Chromium capture at `artifacts/e2e/dashboard.png`. Its assertions cover the new copy and
+navigation, real service status, successful and invalid metadata checks, no external
+browser requests, and no horizontal overflow at 390 px and 360 px.
+
+After the gate, the updated production page was reloaded from `http://localhost:18107/`:
+HTTP 200, title `Manicule — API clarity, measured`, the new hero heading, and live
+`OPERATIONAL` stack state were observed. A 360 px viewport retained the working form
+button and had no document overflow. `http://localhost:18207/api/status` remained covered
+by the integrated gate. Phase scope remains 0/1; no domain behavior was added.
+
+## Sculptural UI redesign — verified
+
+The previous visual direction was replaced in response to the request for a more
+distinctive, Awwwards-inspired experience. The result uses oversized editorial type,
+charcoal/citrus contrast, an original shaded dimensional SVG object, illustrated
+principles, a real local playground, native roadmap disclosures, and a large typographic
+footer. It is original artwork, not a copied site or an award/rating claim.
+
+The earlier hero had a concrete styling defect: its `.hero h1` selector did not match the
+`.hero-section` element, so the heading actually rendered at **32 px**. Functional tests
+had not caught this. The rebuilt heading is explicitly styled, and the browser regression
+now checks its computed size is at least **100 px at a 1280 px viewport**. It also
+measures actual text bounds, not just the heading's block box.
+
+### Current verification boundary
+
+Command: `.\scripts\Verify.ps1`. **Exit code 0**. UTC interval: `2026-11-12T01:03:49Z` to
+`2026-11-12T01:28:04Z`. Timing is recorded for provenance, not as a performance benchmark.
+
+| Check                             | Result                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| Prettier / Spotless / ESLint      | Passed                                                                                     |
+| Frontend and E2E TypeScript       | Passed                                                                                     |
+| Frontend unit tests               | 6 passed                                                                                   |
+| Java request tests                | 8 passed, no failures/errors/skips                                                         |
+| Real PostgreSQL integration tests | 4 passed, no failures/errors/skips                                                         |
+| Chromium/API E2E                  | 5 passed against production nginx/API/database                                             |
+| Builds                            | Vite bundle, executable JAR, and runtime images passed                                     |
+| Integrated runtime checks         | 31 passed; resource limits, isolation, host ports, bootstrap, outage and recovery retained |
+
+Browser coverage includes:
+
+- The primary CTA really navigates to the local workspace. Synthetic-example fill, real
+  validation, invalid input, explicit API failures, and non-persistence are checked.
+- Editing previously checked metadata removes stale success feedback. Inputs are disabled
+  while the corresponding validation request is pending.
+- Decorative animation runs by default, can be stopped, and responds to a changed
+  operating-system reduced-motion preference. User-directed keyboard rotation still works
+  with motion reduced.
+- The skip link moves keyboard focus to the main landmark. Roadmap disclosures open and
+  close with the keyboard and remain explicitly planned/not implemented.
+- Viewports **1440, 1024, 768, 390, 360, and 320 px** have no document overflow or clipped
+  hero text. The test compares with `documentElement.clientWidth`, avoiding the earlier
+  scrollbar-width blind spot.
+- The primary browser flow produced no external requests or unhandled page errors.
+
+The final desktop, full-page, and mobile captures were visually inspected. The first
+sculpture material was refined to reduce harsh checkerboarding, caption spacing was
+increased, and the off-screen skip link was made fully transparent until focused so it
+does not leak into a scrolled full-page screenshot.
+
+After the integrated gate, the shared host browser was reloaded from
+`http://localhost:18107/`: HTTP **200**, heading **Less guess. More yes.**, and live
+**OPERATIONAL** state. Its desktop headline computed to **131.04 px** at a 1440 px
+viewport. Actual mouse movement produced sculpture tilt of **3.5 degrees X / 5.4 degrees
+Y**, which reset on pointer exit. With Windows' scrollbar at a 360 px viewport, document
+and client widths were both **345 px**, with all hero text inside the viewport. The
+browser was restored to desktop size afterward.
+
+### Commands and retained evidence
+
+The final source polish was formatted before the gate with:
+
+```powershell
+Set-Location C:\Users\upadhsah\Desktop\project\Manicule
+. .\scripts\Common.ps1
+Invoke-ManiculeCompose -Arguments @('run','--rm','--no-deps','web-check','sh','-c','npm exec -- prettier --write apps/web/src/ClaritySculpture.tsx apps/web/src/styles.css tests/e2e/smoke.spec.ts')
+.\scripts\Verify.ps1
+```
+
+The gate's full command expansion is retained in
+`artifacts/verification-20261112T010348Z.log`; `artifacts/verification.json` records its
+pass status and every integrated check. Additional evidence:
+
+- `artifacts/ui-direction-check.log`: focused formatter/lint/unit run and the initial
+  TypeScript failure. Strict indexed access rejected an inferred point array; an explicit
+  four-point tuple fixed it without disabling checks or using assertions.
+- `artifacts/ui-direction-build.log`: subsequent successful TypeScript/Vite build and
+  project-scoped web image publication.
+- `artifacts/ui-direction-e2e.log`: the first five-test real-browser pass before the final
+  material/spacing polish.
+- `artifacts/e2e/results.xml` and `artifacts/e2e/report/index.html`: final browser
+  results.
+- `artifacts/e2e/hero-desktop.png`, `hero-mobile.png`, `workspace-mobile.png`, and
+  `dashboard.png`: final production screenshots.
+- Java unit/integration XML reports remain under `services/api/target`.
+
+An initial shell invocation incorrectly combined redirected native stderr with
+PowerShell's terminating-error policy. It was rerun using `Start-Transcript`; no project
+helper or runtime was changed to conceal the failure.
+
+**Blockers: none for this UI update.** The existing Phase 1 API contract and
+local/non-persistent scope are preserved. No dependency was added, no host runtime was
+replaced, and no other project, Git repository, cloud resource, or real user data was
+touched. The three intended Manicule runtime containers are healthy; temporary
+verification containers were removed. Phase 2 remains unimplemented and requires a
+separate instruction.

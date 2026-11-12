@@ -1,6 +1,10 @@
 # Coding and validation conventions
 
 - Keep TypeScript strict and Java DTOs typed; do not bypass errors with `any`.
+- Use self-hosted or system fonts and project-local visual assets; an offline local-only
+  workspace must not require third-party font or image requests.
+- Use real anchor targets for available UI actions and clearly label future, unimplemented
+  roadmap features; never imply that mock data is measured output.
 - Prefer small coherent vertical slices and existing framework mechanisms.
 - Use LF line endings, UTF-8, two-space web/config indentation, and the Java formatter
   configured in Maven. Windows-mounted shell files must remain LF.

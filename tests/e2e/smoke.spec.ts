@@ -6,34 +6,151 @@ test("browser reaches the real stack and handles valid and invalid metadata", as
   page,
 }) => {
   const errors: string[] = [];
+  const externalRequests: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => {
+    if (!request.url().startsWith("http://web:8080/")) {
+      externalRequests.push(request.url());
+    }
+  });
   const response = await page.goto("/");
   expect(response?.status()).toBe(200);
   expect(response?.headers()["content-security-policy"]).toContain("default-src 'self'");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Better docs. Fewer invented calls.",
+  await expect(page).toHaveTitle("Manicule — API clarity, measured");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveAccessibleName(
+    "Less guess. More yes.",
   );
-  await expect(page.getByText("Local stack ready")).toBeVisible();
-  await expect(page.getByText("Schema v1")).toBeVisible();
-  await page.getByLabel("API name").fill("Synthetic pet store");
-  await page.getByLabel("Version", { exact: true }).fill("1.0.0");
-  await page.getByRole("button", { name: "Check metadata" }).click();
-  await expect(page.getByRole("status")).toHaveText(
-    "Metadata valid for Synthetic pet store (1.0.0). Nothing was saved.",
+  expect(
+    await page
+      .getByRole("heading", { level: 1 })
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)),
+  ).toBeGreaterThanOrEqual(100);
+  await expect(page.getByRole("link", { name: "Enter the workspace" })).toHaveAttribute(
+    "href",
+    "#workspace",
   );
+  await expect(page.getByText("OPERATIONAL")).toBeVisible();
+  await expect(page.getByText("V1")).toBeVisible();
+  await expect(page.getByText(/future ideas, not live features/)).toBeVisible();
+  await page.getByRole("button", { name: "Pause motion" }).click();
+  await page.screenshot({ path: "../../artifacts/e2e/hero-desktop.png" });
+  await page.getByRole("link", { name: "Enter the workspace" }).click();
+  await expect(page).toHaveURL(/#workspace$/);
+  await page.getByRole("button", { name: "Fill a synthetic example" }).click();
+  await expect(page.getByLabel("API name")).toHaveValue("Synthetic pet store");
+  await expect(page.getByLabel("Version", { exact: true })).toHaveValue("1.0.0");
+  await page.getByRole("button", { name: "Give it a check" }).click();
+  await expect(page.getByRole("status")).toContainText("Nothing was saved.");
   await page.screenshot({ path: "../../artifacts/e2e/dashboard.png", fullPage: true });
   await page.getByLabel("API name").fill(" ");
   await page.getByLabel("Version", { exact: true }).fill("bad version");
-  await page.getByRole("button", { name: "Check metadata" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Correct the listed fields.");
+  await page.getByRole("button", { name: "Give it a check" }).click();
+  await expect(page.getByRole("alert")).toContainText("Correct the listed fields.");
   await expect(page.getByLabel("API name")).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByRole("status")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("button", { name: "Check metadata" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Give it a check" })).toBeVisible();
   expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
   ).toBe(true);
+  await page.setViewportSize({ width: 360, height: 780 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  expect(externalRequests).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test("artwork motion is controllable and honors a changed reduced-motion preference", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Pause motion" })).toBeVisible();
+  expect(
+    await page
+      .locator(".sculpture-float")
+      .evaluate((element) =>
+        element.getAnimations().some((animation) => animation.playState === "running"),
+      ),
+  ).toBe(true);
+  await page.getByRole("button", { name: "Pause motion" }).click();
+  await expect(page.getByRole("button", { name: "Enable motion" })).toBeVisible();
+  expect(
+    await page
+      .locator(".sculpture-float")
+      .evaluate((element) => element.getAnimations().length),
+  ).toBe(0);
+  await page.getByRole("button", { name: "Enable motion" }).click();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.getByText("Reduced motion", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  const rotation = page.getByRole("slider", { name: "Rotate the clarity object" });
+  await rotation.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(rotation).toHaveValue("1");
+  await expect(rotation).toHaveAttribute("aria-valuetext", "1 degree");
+  await expect(page.locator(".sculpture-turn")).not.toHaveCSS(
+    "transform",
+    "matrix(1, 0, 0, 1, 0, 0)",
+  );
+});
+
+test("keyboard navigation and the responsive composition remain usable", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
+  const firstRoadmap = page.locator(".roadmap-item").first();
+  await firstRoadmap.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    firstRoadmap.getByText(/Ownership, permissions, and safe ingestion/),
+  ).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(
+    firstRoadmap.getByText(/Ownership, permissions, and safe ingestion/),
+  ).not.toBeVisible();
+  for (const width of [1440, 1024, 768, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+      `No horizontal overflow at ${width}px`,
+    ).toBe(true);
+    const hero = await page.getByRole("heading", { level: 1 }).boundingBox();
+    if (!hero) throw new Error(`The hero heading is missing at ${width}px.`);
+    expect(hero.x).toBeGreaterThanOrEqual(0);
+    expect(hero.x + hero.width).toBeLessThanOrEqual(width);
+    const textFits = await page.locator("h1 > span, h1 > em").evaluateAll((lines) =>
+      lines.every((line) => {
+        const range = document.createRange();
+        range.selectNodeContents(line);
+        const bounds = range.getBoundingClientRect();
+        return bounds.left >= 0 && bounds.right <= document.documentElement.clientWidth;
+      }),
+    );
+    expect(textFits, `No clipped headline text at ${width}px`).toBe(true);
+  }
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: "../../artifacts/e2e/hero-mobile.png" });
+  await page.getByRole("button", { name: "Fill a synthetic example" }).click();
+  await page.getByRole("button", { name: "Give it a check" }).click();
+  await expect(page.getByRole("status")).toContainText("Nothing was saved.");
+  await page
+    .locator(".form-panel")
+    .screenshot({ path: "../../artifacts/e2e/workspace-mobile.png" });
 });
 
 test("real API enforces the skeleton contract and explicit failure responses", async ({

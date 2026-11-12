@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 function jsonResponse(body: unknown, status = 200) {
@@ -25,21 +25,49 @@ function mockFetch(preflight: () => Response) {
   return fetchMock;
 }
 
-describe("the local skeleton dashboard", () => {
+beforeEach(() => {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }),
+  );
+});
+
+describe("the local-first editorial workspace", () => {
+  it("introduces the phased workspace without presenting future modules as available", () => {
+    mockFetch(() => jsonResponse({}));
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Less guess. More yes." })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Enter the workspace" })).toHaveAttribute(
+      "href",
+      "#workspace",
+    );
+    expect(screen.getByRole("link", { name: "Scroll to the idea" })).toHaveAttribute(
+      "href",
+      "#idea",
+    );
+    expect(screen.getByText(/PLANNED · PHASE 02/)).toBeVisible();
+    expect(screen.getByText(/future ideas, not live features/)).toBeVisible();
+    expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  });
+
   it("shows database-backed readiness and explicitly non-persistent validation", async () => {
     const fetchMock = mockFetch(() =>
       jsonResponse({ valid: true, persisted: false, name: "Pet store", version: "1.0" }),
     );
     render(<App />);
-    expect(await screen.findByText("Local stack ready")).toBeVisible();
-    expect(screen.getByText("Schema v1")).toBeVisible();
+    expect(await screen.findByText("OPERATIONAL")).toBeVisible();
+    expect(screen.getByText("V1")).toBeVisible();
     fireEvent.change(screen.getByLabelText("API name"), {
       target: { value: "Pet store" },
     });
     fireEvent.change(screen.getByLabelText("Version"), { target: { value: "1.0" } });
-    fireEvent.click(screen.getByRole("button", { name: "Check metadata" }));
+    fireEvent.click(screen.getByRole("button", { name: "Give it a check" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Metadata valid for Pet store (1.0). Nothing was saved.",
+      /Pet store.+1\.0.+Nothing was saved\./,
     );
     expect(fetchMock).toHaveBeenLastCalledWith(
       "/api/preflight",
@@ -58,8 +86,8 @@ describe("the local skeleton dashboard", () => {
       ),
     );
     render(<App />);
-    await screen.findByText("Local stack ready");
-    fireEvent.click(screen.getByRole("button", { name: "Check metadata" }));
+    await screen.findByText("OPERATIONAL");
+    fireEvent.click(screen.getByRole("button", { name: "Give it a check" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Correct the listed fields.",
     );
@@ -73,10 +101,8 @@ describe("the local skeleton dashboard", () => {
       vi.fn().mockRejectedValue(new TypeError("Network unavailable")),
     );
     render(<App />);
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Stack unavailable: Network unavailable",
-    );
-    expect(screen.queryByText("Local stack ready")).not.toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Network unavailable");
+    expect(screen.queryByText("OPERATIONAL")).not.toBeInTheDocument();
   });
 
   it("rejects a success-shaped response that claims data was persisted", async () => {
@@ -84,10 +110,39 @@ describe("the local skeleton dashboard", () => {
       jsonResponse({ valid: true, persisted: true, name: "Pet store", version: "1.0" }),
     );
     render(<App />);
-    await screen.findByText("Local stack ready");
-    fireEvent.click(screen.getByRole("button", { name: "Check metadata" }));
+    await screen.findByText("OPERATIONAL");
+    fireEvent.click(screen.getByRole("button", { name: "Give it a check" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The service returned an unexpected validation response.",
     );
+  });
+
+  it("fills a synthetic example and clears its validation result when edited", async () => {
+    const fetchMock = mockFetch(() =>
+      jsonResponse({
+        valid: true,
+        persisted: false,
+        name: "Synthetic pet store",
+        version: "1.0.0",
+      }),
+    );
+    render(<App />);
+    await screen.findByText("OPERATIONAL");
+    fireEvent.click(screen.getByRole("button", { name: "Fill a synthetic example" }));
+    expect(screen.getByLabelText("API name")).toHaveValue("Synthetic pet store");
+    expect(screen.getByLabelText("Version")).toHaveValue("1.0.0");
+    fireEvent.click(screen.getByRole("button", { name: "Give it a check" }));
+    expect(screen.getByLabelText("API name")).toBeDisabled();
+    expect(await screen.findByRole("status")).toHaveTextContent("Nothing was saved.");
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/api/preflight",
+      expect.objectContaining({
+        body: '{"name":"Synthetic pet store","version":"1.0.0"}',
+      }),
+    );
+    fireEvent.change(screen.getByLabelText("API name"), {
+      target: { value: "Another synthetic API" },
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

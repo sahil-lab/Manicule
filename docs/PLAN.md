@@ -6,15 +6,15 @@ Only Phase 0 and Phase 1 are authorized. Guide read completely: 3 pages, section
 No other project/session is activated. All authored files stay under
 `C:\Users\upadhsah\Desktop\project\Manicule`.
 
-| Phase | Scope                                                                               | Status                                                                       |
-| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| 0     | Requirements, architecture, safety, non-goals, criteria, conventions, CI definition | Complete: contract reviewed before application scaffolding                   |
-| 1     | Web/API/PostgreSQL skeleton, health, migration, validation, E2E                     | Complete: full verification exited 0; 19 tests and 31 recorded checks passed |
-| 2     | Domain entities, contracts, permissions, idempotency, transitions                   | Not authorized / not started                                                 |
-| 3     | Ingestion, task generation, local execution, failure classification                 | Not authorized / not started                                                 |
-| 4     | Bounded agent adapters and automation                                               | Not authorized / not started                                                 |
-| 5     | Reliability, full telemetry, failure scenarios, performance                         | Not authorized / not started                                                 |
-| 6     | Real benchmarks, demo, limitations, packaging                                       | Not authorized / not started                                                 |
+| Phase | Scope                                                                               | Status                                                                   |
+| ----- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 0     | Requirements, architecture, safety, non-goals, criteria, conventions, CI definition | Complete: contract reviewed before application scaffolding               |
+| 1     | Web/API/PostgreSQL skeleton, health, migration, validation, E2E                     | Complete: sculptural UI verified; 23 tests and 31 recorded checks passed |
+| 2     | Domain entities, contracts, permissions, idempotency, transitions                   | Not authorized / not started                                             |
+| 3     | Ingestion, task generation, local execution, failure classification                 | Not authorized / not started                                             |
+| 4     | Bounded agent adapters and automation                                               | Not authorized / not started                                             |
+| 5     | Reliability, full telemetry, failure scenarios, performance                         | Not authorized / not started                                             |
+| 6     | Real benchmarks, demo, limitations, packaging                                       | Not authorized / not started                                             |
 
 ## Phase 0 gate
 
@@ -41,11 +41,14 @@ No other project/session is activated. All authored files stay under
 
 ## Verified handoff
 
-Final integrated run: `.\scripts\Verify.ps1`, exit 0, 2026-11-11 17:49:37-17:52:11 UTC.
-The documented `.\scripts\Start.ps1` command subsequently exited 0 and left all three
-runtime services healthy and reachable. No hosted CI run, cloud work, Git initialization,
-commit, remote, push, real-data access, volume deletion, or other-project operation was
-performed.
+Latest integrated run: `.\scripts\Verify.ps1`, exit 0, 2026-11-12 01:03:49-01:28:04 UTC.
+The sculptural UI redesign passed 6 frontend tests, 8 Java unit tests, 4 PostgreSQL
+integration tests, and 5 Chromium/API E2E tests, plus all 31 integrated checks. Desktop
+and mobile captures were visually inspected; keyboard, motion, pointer interaction, and
+actual headline sizing were checked. All three runtime services remain healthy and
+reachable. The documented `.\scripts\Start.ps1` command was also verified during the
+original Phase 1 handoff. No hosted CI run, cloud work, Git initialization, commit,
+remote, push, real-data access, volume deletion, or other-project operation was performed.
 
 See [evidence and exact commands](EVIDENCE.md), [the changed-file inventory](CHANGES.md),
 and [machine-readable results](../artifacts/verification.json).

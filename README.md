@@ -12,12 +12,25 @@ See [the phase plan](docs/PLAN.md) for verified status and
 
 The skeleton provides:
 
-- A React/TypeScript dashboard with an explicitly non-persistent metadata check.
+- A React/TypeScript editorial workspace with an explicitly non-persistent metadata check.
 - A Java 21 / Spring Boot 3 API with health, readiness, validation, and database-backed
   schema status.
 - PostgreSQL with a versioned Flyway migration and a non-superuser application role.
 - Isolated, resource-limited local containers and automated unit, integration, and browser
   smoke tests.
+
+The interface pairs oversized charcoal-and-citrus typography with an original dimensional
+SVG sculpture, an interactive local playground, and expandable roadmap entries. The
+sculpture responds to a mouse pointer and a keyboard-operable rotation slider. Decorative
+motion can be paused and follows the operating system's reduced-motion preference;
+scrolling remains native. No external font, image, animation library, or WebGL dependency
+is required.
+
+Service and migration status are checked on load and on request. A synthetic-example
+button fills the metadata form without making a request; submission performs the real
+local validation. Editing checked metadata clears the old result. The artwork and planned
+features are explicitly distinguished from working functionality and are never presented
+as measured benchmark data.
 
 It does **not** ingest specifications, create benchmarks, invoke agents, execute generated
 code, or produce benchmark scores. Those capabilities are future phases, not hidden or
@@ -49,7 +62,7 @@ credentials. Do not upload `.local`. `Verify.ps1` runs formatting, type/lint che
 and PostgreSQL integration tests, production builds, and an actual Chromium E2E smoke
 test. It exits nonzero on failure and writes local evidence to `artifacts`.
 
-- Dashboard: <http://localhost:18107>
+- Workspace: <http://localhost:18107>
 - API status: <http://localhost:18207/api/status>
 - Liveness: <http://localhost:18207/actuator/health/liveness>
 - Database-aware readiness: <http://localhost:18207/actuator/health/readiness>

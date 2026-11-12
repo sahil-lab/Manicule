@@ -57,19 +57,20 @@ allowed for deferred routes.
 
 ## Measurable gates
 
-| ID    | Acceptance criterion                                                                                                                         | Verification                                               |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| P0-01 | Every guide page read; scope, assumptions, non-goals and safety recorded before application edits                                            | Guide fingerprint, phase log, document review              |
-| P1-01 | All three runtime services become healthy within 180 seconds after images are built                                                          | Compose `up --wait --wait-timeout 180`                     |
-| P1-02 | Web is reachable at loopback 18107; API at loopback 18207; database has no published ports                                                   | Host HTTP probes and container configuration assertions    |
-| P1-03 | PostgreSQL has exactly the applied V1 migration and expected marker                                                                          | Integration tests against actual PostgreSQL and API status |
-| P1-04 | Valid metadata returns 200, `valid: true`, and `persisted: false`; invalid metadata returns 400 with field errors                            | Java tests, browser/API E2E                                |
-| P1-05 | Unknown fields and malformed JSON return 400; non-JSON input returns 415; deferred routes return 404                                         | Java and API E2E tests                                     |
-| P1-06 | Formatting, frontend lint/type check, production builds, unit/integration tests, and real Chromium smoke all exit 0                          | Recorded tool reports and exit status                      |
-| P1-07 | All runtime services have positive CPU/memory/PID limits and no elevated capabilities; API/DB are internal-only, nginx alone bridges ingress | Verification script assertions and actual host probes      |
-| P1-08 | Browser presents readiness, valid feedback and invalid feedback with no uncaught errors                                                      | Browser smoke and failure artifact capture                 |
-| P1-09 | Readiness becomes non-200 when this project's DB is stopped and recovers after restart                                                       | Scoped outage probe with guaranteed restart                |
-| P1-10 | Application DB role is neither superuser nor role/database creator; validation does not change the marker                                    | PostgreSQL integration tests                               |
+| ID    | Acceptance criterion                                                                                                                             | Verification                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| P0-01 | Every guide page read; scope, assumptions, non-goals and safety recorded before application edits                                                | Guide fingerprint, phase log, document review                                        |
+| P1-01 | All three runtime services become healthy within 180 seconds after images are built                                                              | Compose `up --wait --wait-timeout 180`                                               |
+| P1-02 | Web is reachable at loopback 18107; API at loopback 18207; database has no published ports                                                       | Host HTTP probes and container configuration assertions                              |
+| P1-03 | PostgreSQL has exactly the applied V1 migration and expected marker                                                                              | Integration tests against actual PostgreSQL and API status                           |
+| P1-04 | Valid metadata returns 200, `valid: true`, and `persisted: false`; invalid metadata returns 400 with field errors                                | Java tests, browser/API E2E                                                          |
+| P1-05 | Unknown fields and malformed JSON return 400; non-JSON input returns 415; deferred routes return 404                                             | Java and API E2E tests                                                               |
+| P1-06 | Formatting, frontend lint/type check, production builds, unit/integration tests, and real Chromium smoke all exit 0                              | Recorded tool reports and exit status                                                |
+| P1-07 | All runtime services have positive CPU/memory/PID limits and no elevated capabilities; API/DB are internal-only, nginx alone bridges ingress     | Verification script assertions and actual host probes                                |
+| P1-08 | Browser presents readiness, valid feedback and invalid feedback with no uncaught errors                                                          | Browser smoke and failure artifact capture                                           |
+| P1-09 | Readiness becomes non-200 when this project's DB is stopped and recovers after restart                                                           | Scoped outage probe with guaranteed restart                                          |
+| P1-10 | Application DB role is neither superuser nor role/database creator; validation does not change the marker                                        | PostgreSQL integration tests                                                         |
+| P1-11 | Polished responsive UI fits at 360 px; actionable links point to real sections; planned work is clearly labeled; no external font/image requests | Real-browser E2E at 360/390 px; navigation, visual-scope and page-request assertions |
 
 ## Non-goals and stop boundary
 
