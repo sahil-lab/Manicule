@@ -1,6 +1,48 @@
+import { inflateSync } from "node:zlib";
 import { expect, test } from "@playwright/test";
 
 const api = process.env.API_BASE_URL ?? "http://127.0.0.1:18207";
+
+/** Minimal decoder for the 8-bit, non-interlaced RGB(A) PNGs that screenshots produce. */
+function decodePng(png: Buffer) {
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  const channels = png[25] === 6 ? 4 : 3;
+  const data: Buffer[] = [];
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset);
+    if (png.toString("latin1", offset + 4, offset + 8) === "IDAT") {
+      data.push(png.subarray(offset + 8, offset + 8 + length));
+    }
+    offset += length + 12;
+  }
+  const raw = inflateSync(Buffer.concat(data));
+  const stride = width * channels;
+  const pixels = Buffer.alloc(stride * height);
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[y * (stride + 1)];
+    for (let x = 0; x < stride; x += 1) {
+      const at = y * stride + x;
+      const left = x >= channels ? (pixels[at - channels] ?? 0) : 0;
+      const up = y > 0 ? (pixels[at - stride] ?? 0) : 0;
+      const corner = x >= channels && y > 0 ? (pixels[at - stride - channels] ?? 0) : 0;
+      let predicted = 0;
+      if (filter === 1) predicted = left;
+      else if (filter === 2) predicted = up;
+      else if (filter === 3) predicted = (left + up) >> 1;
+      else if (filter === 4) {
+        const estimate = left + up - corner;
+        const byLeft = Math.abs(estimate - left);
+        const byUp = Math.abs(estimate - up);
+        const byCorner = Math.abs(estimate - corner);
+        predicted =
+          byLeft <= byUp && byLeft <= byCorner ? left : byUp <= byCorner ? up : corner;
+      }
+      pixels[at] = ((raw[y * (stride + 1) + 1 + x] ?? 0) + predicted) & 255;
+    }
+  }
+  return { channels, pixels };
+}
 
 test("browser reaches the real stack and handles valid and invalid metadata", async ({
   page,
@@ -65,39 +107,86 @@ test("browser reaches the real stack and handles valid and invalid metadata", as
   expect(errors).toEqual([]);
 });
 
-test("artwork motion is controllable and honors a changed reduced-motion preference", async ({
+test("motion is controllable and honors a changed reduced-motion preference", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Pause motion" })).toBeVisible();
-  expect(
-    await page
-      .locator(".sculpture-float")
+  // The intro overlay lifts on its own once the bundled fonts are ready.
+  await expect(page.locator("#preloader")).toHaveCount(0);
+  const marqueeRuns = () =>
+    page
+      .locator(".marquee-track")
+      .first()
       .evaluate((element) =>
         element.getAnimations().some((animation) => animation.playState === "running"),
-      ),
-  ).toBe(true);
+      );
+  expect(await marqueeRuns()).toBe(true);
+  // Scroll-linked choreography: the hero recedes and headings reveal as they arrive.
+  await page.mouse.wheel(0, 700);
+  await expect
+    .poll(() =>
+      page
+        .locator(".hero")
+        .evaluate((element) => Number(element.style.getPropertyValue("--p"))),
+    )
+    .toBeGreaterThan(0.3);
+  await page.locator(".idea-title").scrollIntoViewIfNeeded();
+  await expect(page.locator(".idea-title")).toHaveAttribute("data-inview", "true");
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole("button", { name: "Pause motion" }).click();
   await expect(page.getByRole("button", { name: "Enable motion" })).toBeVisible();
-  expect(
-    await page
-      .locator(".sculpture-float")
-      .evaluate((element) => element.getAnimations().length),
-  ).toBe(0);
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await expect(page.locator(".hero")).not.toHaveAttribute("style", /--p/);
   await page.getByRole("button", { name: "Enable motion" }).click();
+  expect(await marqueeRuns()).toBe(true);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.getByText("Reduced motion", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
-  const rotation = page.getByRole("slider", { name: "Rotate the clarity object" });
-  await rotation.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(rotation).toHaveValue("1");
-  await expect(rotation).toHaveAttribute("aria-valuetext", "1 degree");
-  await expect(page.locator(".sculpture-turn")).not.toHaveCSS(
-    "transform",
-    "matrix(1, 0, 0, 1, 0, 0)",
+  // Without motion nothing waits on a scroll position to become readable.
+  await expect(page.locator(".statement .word").last()).toHaveCSS("opacity", "1");
+  await expect(page.locator(".roadmap-item").last()).toHaveCSS("opacity", "1");
+});
+
+test("the WebGL lens refracts the headline when the renderer is allowed", async ({
+  page,
+}) => {
+  // Reduced motion skips the intro and draws one still frame, which keeps this quick on a
+  // CPU rasteriser. "?lens=software" opts in to that renderer for this check only.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.goto("/?lens=software");
+  const hero = page.locator(".hero");
+  await expect(hero).toHaveAttribute("data-lens", "on");
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(700);
+  const line = await page.locator(".hero-line").first().boundingBox();
+  if (!line) throw new Error("The first headline line is missing.");
+  // The first line is bone text on black, so saturated lime there can only be the lens.
+  // Its lowest fifth is skipped: the lime second line's tallest letters reach into it.
+  const image = decodePng(
+    await page.screenshot({ clip: { ...line, height: line.height * 0.8 } }),
   );
+  let lensPixels = 0;
+  for (let index = 0; index < image.pixels.length; index += image.channels) {
+    const red = image.pixels[index] ?? 0;
+    const green = image.pixels[index + 1] ?? 0;
+    const blue = image.pixels[index + 2] ?? 0;
+    if (green > 170 && red > 120 && blue < 130 && green - blue > 90) lensPixels += 1;
+  }
+  expect(lensPixels).toBeGreaterThan(400);
+  await page.screenshot({ path: "../../artifacts/e2e/hero-lens.png" });
+
+  await page.goto("/");
+  await expect(hero).not.toHaveAttribute("data-lens", "pending");
+  const mode = await hero.getAttribute("data-lens");
+  expect(["on", "off"]).toContain(mode);
+  // Without a GPU the headline gets its CSS bead instead of an empty canvas.
+  const fallback = await page
+    .locator(".hero-line-accent .hero-line-inner")
+    .evaluate((element) => getComputedStyle(element, "::after").content !== "none");
+  expect(fallback).toBe(mode === "off");
+  await expect(page.locator(".hero-lens")).toBeVisible({ visible: mode === "on" });
 });
 
 test("keyboard navigation and the responsive composition remain usable", async ({
@@ -105,6 +194,8 @@ test("keyboard navigation and the responsive composition remain usable", async (
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  // The load event can precede React's first commit; a key press before it goes nowhere.
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
   await page.keyboard.press("Enter");
@@ -128,16 +219,28 @@ test("keyboard navigation and the responsive composition remain usable", async (
       ),
       `No horizontal overflow at ${width}px`,
     ).toBe(true);
+    const navFits = await page.locator(".site-nav > *").evaluateAll((items) =>
+      items.every((item) => {
+        const box = item.getBoundingClientRect();
+        return box.left >= 0 && box.right <= document.documentElement.clientWidth;
+      }),
+    );
+    expect(navFits, `Navigation fits at ${width}px`).toBe(true);
     const hero = await page.getByRole("heading", { level: 1 }).boundingBox();
     if (!hero) throw new Error(`The hero heading is missing at ${width}px.`);
     expect(hero.x).toBeGreaterThanOrEqual(0);
     expect(hero.x + hero.width).toBeLessThanOrEqual(width);
-    const textFits = await page.locator("h1 > span, h1 > em").evaluateAll((lines) =>
-      lines.every((line) => {
+    // The headline never wraps, so measure the words themselves, not their line boxes.
+    const textFits = await page.locator("h1 [data-lens-text]").evaluateAll((words) =>
+      words.every((word) => {
         const range = document.createRange();
-        range.selectNodeContents(line);
+        range.selectNodeContents(word);
         const bounds = range.getBoundingClientRect();
-        return bounds.left >= 0 && bounds.right <= document.documentElement.clientWidth;
+        return (
+          bounds.width > 0 &&
+          bounds.left >= 0 &&
+          bounds.right <= document.documentElement.clientWidth
+        );
       }),
     );
     expect(textFits, `No clipped headline text at ${width}px`).toBe(true);
@@ -149,7 +252,7 @@ test("keyboard navigation and the responsive composition remain usable", async (
   await page.getByRole("button", { name: "Give it a check" }).click();
   await expect(page.getByRole("status")).toContainText("Nothing was saved.");
   await page
-    .locator(".form-panel")
+    .locator(".check-panel")
     .screenshot({ path: "../../artifacts/e2e/workspace-mobile.png" });
 });
 

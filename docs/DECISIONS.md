@@ -19,6 +19,11 @@
 | D15 | Compile in limited tooling containers; Dockerfiles package generated JAR/bundle only        | Enforces build CPU/memory budgets and avoids duplicate dependency installs                                                          |
 | D16 | nginx publishes both reserved loopback ports; API has no direct host binding                | Actual Docker Desktop host probes failed for internal-only published services; fixed ingress restores access without backend egress |
 | D17 | Native SQL database bootstrap and an authenticated health query                             | Replaces a CRLF-sensitive Windows shell mount; tests real app-role/database readiness rather than only a listening server           |
+| D18 | Hand-written WebGL lens and motion layer; no 3D, animation or smooth-scroll library         | One shader and ~300 lines of motion code cover the design; avoids a large dependency and keeps native scrolling and the strict CSP  |
+| D19 | Three OFL-1.1 typefaces as pinned `@fontsource` packages, Latin subsets bundled by Vite     | System fonts could not carry the design; the packages contain only CSS and font files, so the page still makes no external request  |
+| D20 | The lens is optional: CSS bead without WebGL, never on a software renderer, off with motion | A CPU rasteriser cannot hold a frame rate; `?lens=software` exists only so headless captures and the E2E pixel check can draw it    |
+| D21 | Browser-suite failure traces keep the action log only; 60 s per-test bound                  | Small-file writes cost ~150 ms each on the Windows bind mount where traces land; an unchanged API test timed out in teardown        |
+| D22 | The lens links without blocking, warms up with a discarded draw, and the intro waits for it | On a cold cache the link query blocked for 0.25-6 s and the first frame for ~0.6 s; the shader source is left unchanged             |
 
 Versions selected from the public npm/Maven registries will be recorded in the manifests
 and evidence. Mutable base-image tags will have their actually used image IDs recorded;

@@ -6,15 +6,15 @@ Only Phase 0 and Phase 1 are authorized. Guide read completely: 3 pages, section
 No other project/session is activated. All authored files stay under
 `C:\Users\upadhsah\Desktop\project\Manicule`.
 
-| Phase | Scope                                                                               | Status                                                                   |
-| ----- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 0     | Requirements, architecture, safety, non-goals, criteria, conventions, CI definition | Complete: contract reviewed before application scaffolding               |
-| 1     | Web/API/PostgreSQL skeleton, health, migration, validation, E2E                     | Complete: sculptural UI verified; 23 tests and 31 recorded checks passed |
-| 2     | Domain entities, contracts, permissions, idempotency, transitions                   | Not authorized / not started                                             |
-| 3     | Ingestion, task generation, local execution, failure classification                 | Not authorized / not started                                             |
-| 4     | Bounded agent adapters and automation                                               | Not authorized / not started                                             |
-| 5     | Reliability, full telemetry, failure scenarios, performance                         | Not authorized / not started                                             |
-| 6     | Real benchmarks, demo, limitations, packaging                                       | Not authorized / not started                                             |
+| Phase | Scope                                                                               | Status                                                           |
+| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 0     | Requirements, architecture, safety, non-goals, criteria, conventions, CI definition | Complete: contract reviewed before application scaffolding       |
+| 1     | Web/API/PostgreSQL skeleton, health, migration, validation, E2E                     | Complete; the final lens UI source passed 26 tests and 31 checks |
+| 2     | Domain entities, contracts, permissions, idempotency, transitions                   | Not authorized / not started                                     |
+| 3     | Ingestion, task generation, local execution, failure classification                 | Not authorized / not started                                     |
+| 4     | Bounded agent adapters and automation                                               | Not authorized / not started                                     |
+| 5     | Reliability, full telemetry, failure scenarios, performance                         | Not authorized / not started                                     |
+| 6     | Real benchmarks, demo, limitations, packaging                                       | Not authorized / not started                                     |
 
 ## Phase 0 gate
 
@@ -41,26 +41,34 @@ No other project/session is activated. All authored files stay under
 
 ## Verified handoff
 
-Latest integrated run: `.\scripts\Verify.ps1`, exit 0, 2026-11-12 01:03:49-01:28:04 UTC.
-The sculptural UI redesign passed 6 frontend tests, 8 Java unit tests, 4 PostgreSQL
-integration tests, and 5 Chromium/API E2E tests, plus all 31 integrated checks. Desktop
-and mobile captures were visually inspected; keyboard, motion, pointer interaction, and
-actual headline sizing were checked. All three runtime services remain healthy and
-reachable. The documented `.\scripts\Start.ps1` command was also verified during the
-original Phase 1 handoff. No hosted CI run, cloud work, Git initialization, commit,
-remote, push, real-data access, volume deletion, or other-project operation was performed.
+Latest complete run: `.\scripts\Verify.ps1`, exit 0, 2026-11-13 09:05:57-09:18:04 UTC, on
+the final source of the liquid lens redesign: 8 frontend tests, 8 Java unit tests, 4
+PostgreSQL integration tests and 6 Chromium/API E2E tests, plus all 31 integrated checks.
+Two earlier complete runs on this redesign passed with 24 tests each; one run in between
+failed at image packaging shortly before the host was restarted, with the cause not
+established. The documented `.\scripts\Start.ps1` command was verified during the original
+Phase 1 handoff and used again after the first of two host restarts on 2026-11-13; after
+the second, the three services were started directly with Compose from the verified
+images. This work performed no hosted CI run, cloud work, Git initialization, commit,
+remote, push, real-data access, volume deletion, or other-project operation. A Git
+repository with a GitHub remote was nevertheless found in the folder on 2026-11-13,
+created outside this work. Its last commit predates this redesign, which is uncommitted;
+the evidence file gives the details.
 
 See [evidence and exact commands](EVIDENCE.md), [the changed-file inventory](CHANGES.md),
 and [machine-readable results](../artifacts/verification.json).
 
-Blocking issues: **none for the authorized local skeleton**. Shared Docker availability
-remains a prerequisite; an earlier engine-unresponsive interval failed the startup wait
-rather than being silently treated as success. The unmodified threshold passed after the
-engine recovered. No global Docker restart or cleanup was performed by this session.
+Blocking issue: **none.** The services do not restart by themselves, so after a host or
+Docker engine restart the site is down until `.\scripts\Start.ps1` is run. This session
+did not start, restart or clean up the shared engine; when it was found stopped, the user
+was asked, and it was already starting when checked. An earlier engine-unresponsive
+interval likewise failed the startup wait rather than being silently treated as success,
+and the unmodified threshold passed after the engine recovered.
 
 Limitations: unauthenticated local-only prototype; nginx ingress has an explicit
 egress-capable network boundary; mutable base tags; no hostile-code sandbox, benchmarks,
-or production-readiness claim.
+or production-readiness claim. The hero's frame rate on a hardware GPU was measured before
+the last lens edits and not again after them.
 
 ## Next phase after successful verification
 

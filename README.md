@@ -19,12 +19,23 @@ The skeleton provides:
 - Isolated, resource-limited local containers and automated unit, integration, and browser
   smoke tests.
 
-The interface pairs oversized charcoal-and-citrus typography with an original dimensional
-SVG sculpture, an interactive local playground, and expandable roadmap entries. The
-sculpture responds to a mouse pointer and a keyboard-operable rotation slider. Decorative
-motion can be paused and follows the operating system's reduced-motion preference;
-scrolling remains native. No external font, image, animation library, or WebGL dependency
-is required.
+The interface is built around one idea: a liquid glass bead that drifts across an
+oversized headline and magnifies the words beneath it. The bead is a ray-marched WebGL
+shader written for this project; it follows the pointer, splits colour at the letter
+edges, and is drawn over real, selectable text. Around it: an intro counter, self-hosted
+display, italic-serif and mono typefaces, scroll-linked reveals, a headline that recedes
+as the content sheet slides over it, a velocity-reactive marquee, stacking cards, a
+sentence that lights up word by word, and a footer wordmark that stretches under the
+pointer.
+
+None of that is required to use the page. Motion can be paused from the navigation and
+follows the operating system's reduced-motion preference; either way everything is visible
+without scrolling tricks, and scrolling itself is always native. Without a GPU the lens is
+replaced by a CSS bead, and the lens never starts on a software renderer. Where the
+browser allows it, the shader is linked in the background and warmed up behind the intro,
+so the driver's compile does not interrupt a first visit. Fonts and all artwork are
+bundled and served locally: the page makes no third-party request and has no animation or
+3D library dependency.
 
 Service and migration status are checked on load and on request. A synthetic-example
 button fills the metadata form without making a request; submission performs the real
@@ -61,6 +72,9 @@ with existing data cause an explicit error, not an implicit reset. It never prin
 credentials. Do not upload `.local`. `Verify.ps1` runs formatting, type/lint checks, unit
 and PostgreSQL integration tests, production builds, and an actual Chromium E2E smoke
 test. It exits nonzero on failure and writes local evidence to `artifacts`.
+
+The containers do not restart by themselves. After the computer or Docker Desktop has been
+restarted, run `.\scripts\Start.ps1` again to bring the site back.
 
 - Workspace: <http://localhost:18107>
 - API status: <http://localhost:18207/api/status>
@@ -101,6 +115,14 @@ and hosted CI execution require separate authorization.
 See [coding conventions](docs/CONVENTIONS.md) for containerized commands,
 [architecture](docs/ARCHITECTURE.md) for interfaces, and
 [the threat model](docs/THREAT_MODEL.md) for trust boundaries.
+
+For a visual pass, `tests/e2e/review.mjs` captures the running site at three viewport
+sizes into `artifacts/ui-review`, including the bead's entrance frame by frame. It is a
+review aid, not part of the verification gate:
+
+```powershell
+docker compose -p manicule -f .\infra\docker\compose.yaml run --rm --no-deps e2e node tests/e2e/review.mjs
+```
 
 To stop **only this project's** containers while retaining local data:
 

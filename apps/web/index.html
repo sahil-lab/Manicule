@@ -7,10 +7,24 @@
       name="description"
       content="Clearer API documentation, one measurable step at a time. An independent, local-only prototype."
     />
-    <meta name="theme-color" content="#171915" />
+    <meta name="theme-color" content="#0b0c0a" />
     <title>Manicule — API clarity, measured</title>
   </head>
   <body>
+    <div class="preloader" id="preloader" aria-hidden="true">
+      <div class="preloader-row">
+        <span>manicule</span>
+        <span>Local edition</span>
+      </div>
+      <div class="preloader-count">
+        <span class="preloader-number"></span>
+      </div>
+      <div class="preloader-row">
+        <span>Less guess.</span>
+        <span class="preloader-bar"><i></i></span>
+        <span>More yes.</span>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
