@@ -94,6 +94,20 @@ it is not an execution sandbox for generated code. Use `Start.ps1` or `Verify.ps
 build source before packaging images; bare `docker compose build` expects the compiled JAR
 and frontend bundle to exist.
 
+## Vercel frontend runtime
+
+The root and frontend packages require Node.js `^22.12.0` (22.x, at least 22.12.0),
+matching the containerized frontend tooling. Both manifests specify this range so Vercel
+selects Node 22 whether its project root is the repository or `apps/web`.
+
+Set **Settings > Build and Deployment > Node.js Version** to **22.x** in Vercel, then
+redeploy with the updated manifests and lockfile. Keep `engine-strict=true` enabled: an
+`EBADENGINE` error with Node 26 indicates an unsupported runtime, not a dependency
+installation problem.
+
+This addresses frontend builds only. Vercel does not provision this project's Java API or
+PostgreSQL database; those still require separate hosting.
+
 ## Layout
 
 ```text
